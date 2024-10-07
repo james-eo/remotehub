@@ -7,6 +7,9 @@ import cookieParser from "cookie-parser";
 import connectDB from "./database/db.js";
 import errorHandler from "./middleware/error.js";
 
+// Import routes
+import authRoutes from "./routes/auth.js";
+
 const app = express();
 
 //Connect to MongoDB
@@ -22,12 +25,18 @@ app.use(bodyParser.urlencoded({ limit: "5mb", extended: true }));
 app.use(cookieParser());
 app.use(cors());
 
+// ROUTES MIDDLEWARE
+app.use("/api", authRoutes);
+// app.get("/", (req, res) => {
+//   res.send("Hello World!");
+// });
+
 // Error handling middleware
 app.use(errorHandler);
 
-app.get("/", (req, res) => {
-  res.send("Hello World!");
-});
+// app.get("/", (req, res) => {
+//   res.send("Hello World!");
+// });
 
 app.listen(PORT, () => {
   connectDB();
