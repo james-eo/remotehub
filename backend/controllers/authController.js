@@ -78,6 +78,20 @@ export const signout = (req, res) => {
     message: "Signed out successfully",
   });
 };
+
+// User Profile
+
+export const userProfile = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+    res.status(200).json({
+      success: true,
+      user,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 // export const signup = async (req, res) => {
 //   try {
 //     const { fullName, userName, email, password, confirmPassword, gender } =
