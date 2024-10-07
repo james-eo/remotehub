@@ -8,7 +8,8 @@ import connectDB from "./database/db.js";
 import errorHandler from "./middleware/error.js";
 
 // Import routes
-import authRoutes from "./routes/auth.js";
+import authRoutes from "./routes/authRoute.js";
+import userRoutes from "./routes/userRoutes.js";
 
 const app = express();
 
@@ -27,6 +28,7 @@ app.use(cors());
 
 // ROUTES MIDDLEWARE
 app.use("/api", authRoutes);
+app.use("/api", userRoutes);
 // app.get("/", (req, res) => {
 //   res.send("Hello World!");
 // });
