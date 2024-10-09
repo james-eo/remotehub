@@ -83,3 +83,60 @@ export const deleteUser = async (req, res, next) => {
     return next(error);
   }
 };
+
+// // Create User Bio
+// export const createUserBio = async (req, res, next) => {
+//   const { bio } = req.body;
+
+//   try {
+//     const currentUser = await User.findById(req.user._id);
+
+//     if (!currentUser) {
+//       return next(new ErrorResponse("You must log in", 401));
+//     }
+
+//     currentUser.bio = bio;
+//     await currentUser.save();
+
+//     res.status(200).json({
+//       success: true,
+//       currentUser,
+//     });
+
+//     next();
+//   } catch (error) {
+//     next(error);
+//   }
+// };
+// Create User Job History
+export const userJobHistory = async (req, res, next) => {
+  const { title, description, salary, location } = req.body;
+
+  try {
+    const currentUser = await User.findById(req.user._id);
+
+    if (!currentUser) {
+      return next(new ErrorResponse("You must log in", 401));
+    }
+
+    const addJobHistory = {
+      title,
+      description,
+      salary,
+      location,
+      user: req.user._id,
+    };
+
+    currentUser.jobHistory.push(addJobHistory);
+    await currentUser.save();
+
+    res.status(200).json({
+      success: true,
+      currentUser,
+    });
+
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
