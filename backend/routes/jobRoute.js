@@ -13,10 +13,10 @@ import { isAuthenticated, isAdmin } from "../middleware/authMiddleware.js";
 // /api/job/create
 router.post("/job/create", isAuthenticated, isAdmin, createJob);
 
-// /api/job/:id
+// /api/job/id
 router.get("/job/:id", singleJob);
 
-// /api/job/update/:job_id
+// /api/job/update/job_id
 router.put("/job/update/:job_id", isAuthenticated, isAdmin, updateJob);
 
 // /api/jobs/show
