@@ -10,6 +10,8 @@ import errorHandler from "./middleware/error.js";
 // Import routes
 import authRoutes from "./routes/authRoute.js";
 import userRoutes from "./routes/userRoutes.js";
+import jobTypeRoutes from "./routes/jobTypeRoute.js";
+import jobRoutes from "./routes/jobRoute.js";
 
 const app = express();
 
@@ -29,9 +31,8 @@ app.use(cors());
 // ROUTES MIDDLEWARE
 app.use("/api", authRoutes);
 app.use("/api", userRoutes);
-// app.get("/", (req, res) => {
-//   res.send("Hello World!");
-// });
+app.use("/api", jobTypeRoutes);
+app.use("/api", jobRoutes);
 
 // Error handling middleware
 app.use(errorHandler);
