@@ -1,47 +1,48 @@
-import express from "express";
-import cors from "cors";
-import dotenv from "dotenv";
-import morgan from "morgan";
-import bodyParser from "body-parser";
-import cookieParser from "cookie-parser";
-import connectDB from "./database/db.js";
-import errorHandler from "./middleware/error.js";
+// app.js
 
-// Import routes
-import authRoutes from "./routes/authRoute.js";
+import express from "express";
+import dotenv from "dotenv";
+import cors from "cors";
+import cron from "node-cron";
+import connectDB from "./database/db.js";
+import authRoutes from "./routes/authRoutes.js";
+import jobRoutes from "./routes/jobRoutes.js";
+import jobTypeRoutes from "./routes/jobTypeRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
-import jobTypeRoutes from "./routes/jobTypeRoute.js";
-import jobRoutes from "./routes/jobRoute.js";
+import errorHandler from "./middleware/error.js";
+import { fetchAndStoreJobs } from "./controllers/jobController.js";
+
+// Load environment variables
+dotenv.config();
+
+// Connect to database
+connectDB();
 
 const app = express();
 
-//Connect to MongoDB
-dotenv.config();
-const PORT = process.env.PORT || 8000;
-
-// Middleware: Parse incoming requests data.
-// Use Morgan to log requests in 'dev' format
-
-app.use(morgan("dev"));
-app.use(bodyParser.json({ limit: "5mb" }));
-app.use(bodyParser.urlencoded({ limit: "5mb", extended: true }));
-app.use(cookieParser());
+// Middleware
 app.use(cors());
+app.use(express.json());
 
-// ROUTES MIDDLEWARE
-app.use("/api", authRoutes);
-app.use("/api", userRoutes);
-app.use("/api", jobTypeRoutes);
+// Routes
+app.use("/api/auth", authRoutes);
 app.use("/api", jobRoutes);
+app.use("/api/job-types", jobTypeRoutes);
+app.use("/api/users", userRoutes);
+
+// Schedule job fetching every 6 hours
+cron.schedule("0 */24 * * *", async () => {
+  console.log("Fetching jobs from APIs...");
+  try {
+    await fetchAndStoreJobs();
+  } catch (error) {
+    console.error("Error fetching jobs:", error);
+  }
+});
 
 // Error handling middleware
 app.use(errorHandler);
 
-// app.get("/", (req, res) => {
-//   res.send("Hello World!");
-// });
-
-app.listen(PORT, () => {
-  connectDB();
-  console.log(`Server is running on port ${PORT}`);
-});
+// Start server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
