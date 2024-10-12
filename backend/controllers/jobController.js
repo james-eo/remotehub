@@ -1,115 +1,367 @@
+// controllers/jobController.js
 import Job from "../models/jobModel.js";
-import JobType from "../models/jobTypeModel.js";
 import ErrorResponse from "../utils/errorResponse.js";
+import axios from "axios";
 
-//create job
-export const createJob = async (req, res, next) => {
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const axiosInstance = axios.create({
+  headers: {
+    "User-Agent":
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+    Accept: "application/json, text/plain, */*",
+    "Accept-Language": "en-US,en;q=0.9",
+  },
+});
+
+const fetchWithRetry = async (url, retries = 3, backoff = 1000) => {
   try {
-    const job = await Job.create({
-      title: req.body.title,
-      description: req.body.description,
-      salary: req.body.salary,
-      location: req.body.location,
-      jobType: req.body.jobType,
-      user: req.user.id,
-    });
-    res.status(201).json({
+    const response = await axiosInstance.get(url);
+    return response.data;
+  } catch (error) {
+    if (retries > 0 && error.response && error.response.status === 403) {
+      console.log(`Retrying in ${backoff}ms...`);
+      await delay(backoff);
+      return fetchWithRetry(url, retries - 1, backoff * 2);
+    }
+    throw error;
+  }
+};
+
+// Helper function to normalize job data from different APIs
+// const normalizeJobData = (job, source) => {
+//   switch (source) {
+//     case "Arbeitnow":
+//       return {
+//         sourceId: job.slug,
+//         sourceUrl: job.url,
+//         title: job.title,
+//         company: {
+//           name: job.company_name,
+//           logo: job.company_logo,
+//         },
+//         description: job.description,
+//         location: job.location,
+//         jobType: job.job_types[0] || "Full-time",
+//         visaSponsorship: job.visa_sponsorship,
+//         publishedAt: new Date(job.created_at),
+//         source: "Arbeitnow",
+//       };
+//     case "Jobicy":
+//       return {
+//         sourceId: job.id,
+//         sourceUrl: job.url,
+//         title: job.jobTitle,
+//         company: {
+//           name: job.companyName,
+//           logo: job.companyLogo,
+//         },
+//         description: job.jobDescription,
+//         excerpt: job.jobExcerpt,
+//         salary: {
+//           min: job.annualSalaryMin,
+//           max: job.annualSalaryMax,
+//           currency: job.salaryCurrency,
+//         },
+//         location: job.jobGeo,
+//         jobType: job.jobType,
+//         industry: job.jobIndustry,
+//         experienceLevel: job.jobLevel,
+//         publishedAt: new Date(job.pubDate),
+//         source: "Jobicy",
+//       };
+//     case "Himalayas":
+//       return {
+//         sourceId: job.id,
+//         sourceUrl: job.url,
+//         title: job.title,
+//         company: {
+//           name: job.companyName,
+//           logo: job.companyLogo,
+//         },
+//         description: job.description,
+//         location: job.location,
+//         jobType: job.type,
+//         salary: {
+//           min: job.salaryMin,
+//           max: job.salaryMax,
+//           currency: job.salaryCurrency,
+//         },
+//         publishedAt: new Date(job.publishedAt),
+//         source: "Himalayas",
+//       };
+//     default:
+//       throw new Error(`Unknown job source: ${source}`);
+//   }
+// };
+
+const normalizeJobData = (job, source) => {
+  const parseDate = (dateString) => {
+    const parsed = new Date(dateString);
+    return isNaN(parsed.getTime()) ? new Date() : parsed;
+  };
+
+  switch (source) {
+    case "Arbeitnow":
+      return {
+        sourceId: job.slug,
+        sourceUrl: job.url,
+        title: job.title,
+        company: {
+          name: job.company_name,
+          logo: job.company_logo,
+        },
+        description: job.description,
+        location: job.location,
+        jobType: job.job_types[0] || "Full-time",
+        visaSponsorship: job.visa_sponsorship,
+        publishedAt: parseDate(job.created_at),
+        source: "Arbeitnow",
+      };
+    case "Jobicy":
+      return {
+        sourceId: job.id,
+        sourceUrl: job.url,
+        title: job.jobTitle,
+        company: {
+          name: job.companyName,
+          logo: job.companyLogo,
+        },
+        description: job.jobDescription,
+        excerpt: job.jobExcerpt,
+        salary: {
+          min: job.annualSalaryMin,
+          max: job.annualSalaryMax,
+          currency: job.salaryCurrency,
+        },
+        location: job.jobGeo,
+        jobType: job.jobType,
+        industry: job.jobIndustry,
+        experienceLevel: job.jobLevel,
+        publishedAt: parseDate(job.pubDate),
+        source: "Jobicy",
+      };
+    case "Himalayas":
+      return {
+        sourceId: job.id,
+        sourceUrl: job.url,
+        title: job.title,
+        company: {
+          name: job.companyName,
+          logo: job.companyLogo,
+        },
+        description: job.description,
+        location: job.location,
+        jobType: job.type,
+        salary: {
+          min: job.salaryMin,
+          max: job.salaryMax,
+          currency: job.salaryCurrency,
+        },
+        publishedAt: parseDate(job.publishedAt),
+        source: "Himalayas",
+      };
+    default:
+      throw new Error(`Unknown job source: ${source}`);
+  }
+};
+
+// Fetch and store jobs from APIs
+// export const fetchAndStoreJobs = async (req, res, next) => {
+//   try {
+//     const apis = [
+//       // {
+//       //   url: "https://www.arbeitnow.com/api/job-board-api",
+//       //   source: "Arbeitnow",
+//       // },
+//       // {
+//       //   url: "https://jobicy.com/api/v2/remote-jobs",
+//       //   source: "Jobicy",
+//       // },
+//       {
+//         url: "https://himalayas.app/jobs/api",
+//         source: "Himalayas",
+//       },
+//     ];
+
+//     for (const api of apis) {
+//       console.log(`Fetching jobs from ${api.source}...`);
+//       const data = await fetchWithRetry(api.url);
+//       let jobs;
+
+//       if (api.source === "Himalayas") {
+//         jobs = data.jobs; // Himalayas API returns an object with a 'jobs' array
+//       } else {
+//         jobs = data.data || data;
+//       }
+
+//       if (!Array.isArray(jobs)) {
+//         console.error(`Invalid response from ${api.source} API:`, jobs);
+//         continue; // Skip to the next API if the response is not as expected
+//       }
+
+//       for (const job of jobs) {
+//         const normalizedJob = normalizeJobData(job, api.source);
+//         await Job.findOneAndUpdate(
+//           { sourceId: normalizedJob.sourceId },
+//           normalizedJob,
+//           { upsert: true, new: true }
+//         );
+//       }
+
+//       // Add a delay between API calls to respect rate limits
+//       await delay(5000);
+//     }
+
+//     if (res) {
+//       res.status(200).json({
+//         success: true,
+//         message: "Jobs fetched and stored successfully",
+//       });
+//     } else {
+//       console.log("Jobs fetched and stored successfully");
+//     }
+//   } catch (error) {
+//     console.error("Error fetching jobs:", error);
+//     if (next) {
+//       next(error);
+//     } else {
+//       throw error;
+//     }
+//   }
+// };
+
+export const fetchAndStoreJobs = async (req, res, next) => {
+  try {
+    const apis = [
+      {
+        url: "https://himalayas.app/jobs/api",
+        source: "Himalayas",
+      },
+    ];
+
+    for (const api of apis) {
+      console.log(`Fetching jobs from ${api.source}...`);
+      const data = await fetchWithRetry(api.url);
+      let jobs;
+
+      if (api.source === "Himalayas") {
+        jobs = data.jobs;
+      } else {
+        jobs = data.data || data;
+      }
+
+      if (!Array.isArray(jobs)) {
+        console.error(`Invalid response from ${api.source} API:`, jobs);
+        continue;
+      }
+
+      for (const job of jobs) {
+        const normalizedJob = normalizeJobData(job, api.source);
+        console.log(
+          `Normalized job data for ${normalizedJob.title}:`,
+          JSON.stringify(normalizedJob, null, 2)
+        );
+
+        try {
+          await Job.findOneAndUpdate(
+            { sourceId: normalizedJob.sourceId },
+            normalizedJob,
+            { upsert: true, new: true }
+          );
+        } catch (error) {
+          console.error(`Error saving job ${normalizedJob.title}:`, error);
+        }
+      }
+
+      await delay(5000);
+    }
+
+    if (res) {
+      res.status(200).json({
+        success: true,
+        message: "Jobs fetched and stored successfully",
+      });
+    } else {
+      console.log("Jobs fetched and stored successfully");
+    }
+  } catch (error) {
+    console.error("Error fetching jobs:", error);
+    if (next) {
+      next(error);
+    } else {
+      throw error;
+    }
+  }
+};
+
+// Get all jobs with filtering and pagination
+export const getJobs = async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const startIndex = (page - 1) * limit;
+
+    const query = {};
+
+    if (req.query.search) {
+      query.$text = { $search: req.query.search };
+    }
+
+    if (req.query.jobType) {
+      query.jobType = req.query.jobType;
+    }
+
+    if (req.query.location) {
+      query.location = { $regex: req.query.location, $options: "i" };
+    }
+
+    if (req.query.industry) {
+      query.industry = { $regex: req.query.industry, $options: "i" };
+    }
+
+    if (req.query.experienceLevel) {
+      query.experienceLevel = {
+        $regex: req.query.experienceLevel,
+        $options: "i",
+      };
+    }
+
+    if (req.query.visaSponsorship) {
+      query.visaSponsorship = req.query.visaSponsorship === "true";
+    }
+
+    const total = await Job.countDocuments(query);
+    const jobs = await Job.find(query)
+      .sort({ publishedAt: -1 })
+      .skip(startIndex)
+      .limit(limit);
+
+    res.status(200).json({
       success: true,
-      job,
+      count: jobs.length,
+      total,
+      page,
+      pages: Math.ceil(total / limit),
+      data: jobs,
     });
   } catch (error) {
     next(error);
   }
 };
 
-//single job
-export const singleJob = async (req, res, next) => {
+// Get a single job
+export const getJob = async (req, res, next) => {
   try {
     const job = await Job.findById(req.params.id);
+
+    if (!job) {
+      return next(new ErrorResponse("Job not found", 404));
+    }
+
     res.status(200).json({
       success: true,
-      job,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-//update job by id.
-export const updateJob = async (req, res, next) => {
-  try {
-    const job = await Job.findByIdAndUpdate(req.params.job_id, req.body, {
-      new: true,
-    })
-      .populate("jobType", "jobTypeName")
-      .populate("user", "firstName lastName");
-    res.status(200).json({
-      success: true,
-      job,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-//List all jobs.
-export const listJobs = async (req, res, next) => {
-  //enable search
-  const keyword = req.query.keyword
-    ? {
-        title: {
-          $regex: req.query.keyword,
-          $options: "i",
-        },
-      }
-    : {};
-
-  // filter jobs by category ids
-  let ids = [];
-  const jobTypeCategory = await JobType.find({}, { _id: 1 });
-  jobTypeCategory.forEach((cat) => {
-    ids.push(cat._id);
-  });
-
-  let cat = req.query.cat;
-  let categ = cat !== "" ? cat : ids;
-
-  //jobs by location
-  let locations = [];
-  const jobByLocation = await Job.find({}, { location: 1 });
-  jobByLocation.forEach((val) => {
-    locations.push(val.location);
-  });
-  let setUniqueLocation = [...new Set(locations)];
-  let location = req.query.location;
-  let locationFilter = location !== "" ? location : setUniqueLocation;
-
-  //enable pagination
-  const pageSize = 5;
-  const page = Number(req.query.pageNumber) || 1;
-  const count = await Job.find({}).estimatedDocumentCount();
-  // const count = await Job.find({
-  //   ...keyword,
-  //   jobType: categ,
-  //   location: locationFilter,
-  // }).countDocuments();
-
-  try {
-    const jobs = await Job.find({
-      ...keyword,
-      jobType: categ,
-      location: locationFilter,
-    })
-      .sort({ createdAt: -1 })
-      .skip(pageSize * (page - 1))
-      .limit(pageSize);
-    res.status(200).json({
-      success: true,
-      jobs,
-      page,
-      pages: Math.ceil(count / pageSize),
-      count,
-      setUniqueLocation,
+      data: job,
     });
   } catch (error) {
     next(error);
