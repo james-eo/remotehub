@@ -4,7 +4,7 @@ import {
   createJob,
   singleJob,
   updateJob,
-  showJobs,
+  listJobs,
 } from "../controllers/jobController.js";
 import { isAuthenticated, isAdmin } from "../middleware/authMiddleware.js";
 
@@ -19,7 +19,7 @@ router.get("/job/:id", singleJob);
 // /api/job/update/job_id
 router.put("/job/update/:job_id", isAuthenticated, isAdmin, updateJob);
 
-// /api/jobs/show
-router.get("/jobs/show", showJobs);
+// /api/jobs/list
+router.get("/jobs/list", listJobs);
 
 export default router;
