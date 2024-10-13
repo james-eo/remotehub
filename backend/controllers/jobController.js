@@ -1,4 +1,3 @@
-// controllers/jobController.js
 import Job from "../models/jobModel.js";
 import ErrorResponse from "../utils/errorResponse.js";
 import axios from "axios";
@@ -27,73 +26,6 @@ const fetchWithRetry = async (url, retries = 3, backoff = 1000) => {
     throw error;
   }
 };
-
-// Helper function to normalize job data from different APIs
-// const normalizeJobData = (job, source) => {
-//   switch (source) {
-//     case "Arbeitnow":
-//       return {
-//         sourceId: job.slug,
-//         sourceUrl: job.url,
-//         title: job.title,
-//         company: {
-//           name: job.company_name,
-//           logo: job.company_logo,
-//         },
-//         description: job.description,
-//         location: job.location,
-//         jobType: job.job_types[0] || "Full-time",
-//         visaSponsorship: job.visa_sponsorship,
-//         publishedAt: new Date(job.created_at),
-//         source: "Arbeitnow",
-//       };
-//     case "Jobicy":
-//       return {
-//         sourceId: job.id,
-//         sourceUrl: job.url,
-//         title: job.jobTitle,
-//         company: {
-//           name: job.companyName,
-//           logo: job.companyLogo,
-//         },
-//         description: job.jobDescription,
-//         excerpt: job.jobExcerpt,
-//         salary: {
-//           min: job.annualSalaryMin,
-//           max: job.annualSalaryMax,
-//           currency: job.salaryCurrency,
-//         },
-//         location: job.jobGeo,
-//         jobType: job.jobType,
-//         industry: job.jobIndustry,
-//         experienceLevel: job.jobLevel,
-//         publishedAt: new Date(job.pubDate),
-//         source: "Jobicy",
-//       };
-//     case "Himalayas":
-//       return {
-//         sourceId: job.id,
-//         sourceUrl: job.url,
-//         title: job.title,
-//         company: {
-//           name: job.companyName,
-//           logo: job.companyLogo,
-//         },
-//         description: job.description,
-//         location: job.location,
-//         jobType: job.type,
-//         salary: {
-//           min: job.salaryMin,
-//           max: job.salaryMax,
-//           currency: job.salaryCurrency,
-//         },
-//         publishedAt: new Date(job.publishedAt),
-//         source: "Himalayas",
-//       };
-//     default:
-//       throw new Error(`Unknown job source: ${source}`);
-//   }
-// };
 
 const normalizeJobData = (job, source) => {
   const parseDate = (dateString) => {
@@ -166,71 +98,7 @@ const normalizeJobData = (job, source) => {
   }
 };
 
-// Fetch and store jobs from APIs
-// export const fetchAndStoreJobs = async (req, res, next) => {
-//   try {
-//     const apis = [
-//       // {
-//       //   url: "https://www.arbeitnow.com/api/job-board-api",
-//       //   source: "Arbeitnow",
-//       // },
-//       // {
-//       //   url: "https://jobicy.com/api/v2/remote-jobs",
-//       //   source: "Jobicy",
-//       // },
-//       {
-//         url: "https://himalayas.app/jobs/api",
-//         source: "Himalayas",
-//       },
-//     ];
-
-//     for (const api of apis) {
-//       console.log(`Fetching jobs from ${api.source}...`);
-//       const data = await fetchWithRetry(api.url);
-//       let jobs;
-
-//       if (api.source === "Himalayas") {
-//         jobs = data.jobs; // Himalayas API returns an object with a 'jobs' array
-//       } else {
-//         jobs = data.data || data;
-//       }
-
-//       if (!Array.isArray(jobs)) {
-//         console.error(`Invalid response from ${api.source} API:`, jobs);
-//         continue; // Skip to the next API if the response is not as expected
-//       }
-
-//       for (const job of jobs) {
-//         const normalizedJob = normalizeJobData(job, api.source);
-//         await Job.findOneAndUpdate(
-//           { sourceId: normalizedJob.sourceId },
-//           normalizedJob,
-//           { upsert: true, new: true }
-//         );
-//       }
-
-//       // Add a delay between API calls to respect rate limits
-//       await delay(5000);
-//     }
-
-//     if (res) {
-//       res.status(200).json({
-//         success: true,
-//         message: "Jobs fetched and stored successfully",
-//       });
-//     } else {
-//       console.log("Jobs fetched and stored successfully");
-//     }
-//   } catch (error) {
-//     console.error("Error fetching jobs:", error);
-//     if (next) {
-//       next(error);
-//     } else {
-//       throw error;
-//     }
-//   }
-// };
-
+// Fetch jobs from external APIs and store them in the database
 export const fetchAndStoreJobs = async (req, res, next) => {
   try {
     const apis = [
