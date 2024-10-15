@@ -155,9 +155,9 @@
     "whatwg-url": "^13.0.0"
   },
   "scripts": {
-    "start": "concurrently \"npm run backend\" \"npm run frontend\"",
-    "backend": "cd backend && npm start",
-    "frontend": "cd frontend && npx next dev",
+    "install": "cd backend && npm install && cd ../frontend && npm install",
+    "build": "cd frontend && npm run build && cd ../backend && npm run build",
+    "start": "cd backend && npm start"
     "build": "next build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
