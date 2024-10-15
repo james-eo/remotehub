@@ -1,237 +1,246 @@
-import Job from "../models/jobModel.js";
-import ErrorResponse from "../utils/errorResponse.js";
 import axios from "axios";
+import sanitizeHtml from "sanitize-html";
+import Job from "../models/jobModel.js";
+import dotenv from "dotenv";
+import winston from "winston";
 
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+dotenv.config();
 
-const axiosInstance = axios.create({
-  headers: {
-    "User-Agent":
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-    Accept: "application/json, text/plain, */*",
-    "Accept-Language": "en-US,en;q=0.9",
-  },
+//Configure logger
+const logger = winston.createLogger({
+  level: "info",
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
+  ),
+  transports: [
+    new winston.transports.Console(),
+    new winston.transports.File({ filename: "error.log", level: "error" }),
+    new winston.transports.File({ filename: "combined.log" }),
+  ],
 });
 
-const fetchWithRetry = async (url, retries = 3, backoff = 1000) => {
-  try {
-    const response = await axiosInstance.get(url);
-    return response.data;
-  } catch (error) {
-    if (retries > 0 && error.response && error.response.status === 403) {
-      console.log(`Retrying in ${backoff}ms...`);
-      await delay(backoff);
-      return fetchWithRetry(url, retries - 1, backoff * 2);
+// Sanitization options
+const sanitizeOptions = {
+  allowedTags: [],
+  allowedAttributes: {},
+};
+
+// Helper function to convert salary string to number
+const parseSalary = (salaryString) => {
+  if (!salaryString) return { min: null, max: null };
+
+  const numbers = salaryString.match(/\d+/g);
+  if (!numbers) return { min: null, max: null };
+
+  if (numbers.length === 1) {
+    return { min: parseInt(numbers[0], 10), max: parseInt(numbers[0], 10) };
+  } else if (numbers.length >= 2) {
+    return { min: parseInt(numbers[0], 10), max: parseInt(numbers[1], 10) };
+  }
+
+  return { min: null, max: null };
+};
+
+// Helper function to determine job type
+const jobTypeMap = {
+  "full-time": ["full-time", "full time", "fulltime"],
+  "part-time": ["part-time", "part time", "parttime"],
+  contract: ["contract", "freelance"],
+  internship: ["internship", "intern"],
+};
+
+const determineJobType = (jobType) => {
+  if (!jobType) return "Full-time"; // Default to full-time if no job type provided
+
+  jobType = jobType.toLowerCase();
+  for (const [type, keywords] of Object.entries(jobTypeMap)) {
+    if (keywords.some((keyword) => jobType.includes(keyword))) {
+      return type.charAt(0).toUpperCase() + type.slice(1);
     }
-    throw error;
   }
+  return "Full-time"; // Default to full-time if no match
 };
 
-const normalizeJobData = (job, source) => {
-  const parseDate = (dateString) => {
-    const parsed = new Date(dateString);
-    return isNaN(parsed.getTime()) ? new Date() : parsed;
-  };
-
-  switch (source) {
-    case "Arbeitnow":
-      return {
-        sourceId: job.slug,
-        sourceUrl: job.url,
-        title: job.title,
-        company: {
-          name: job.company_name,
-          logo: job.company_logo,
-        },
-        description: job.description,
-        location: job.location,
-        jobType: job.job_types[0] || "Full-time",
-        visaSponsorship: job.visa_sponsorship,
-        publishedAt: parseDate(job.created_at),
-        source: "Arbeitnow",
-      };
-    case "Jobicy":
-      return {
-        sourceId: job.id,
-        sourceUrl: job.url,
-        title: job.jobTitle,
-        company: {
-          name: job.companyName,
-          logo: job.companyLogo,
-        },
-        description: job.jobDescription,
-        excerpt: job.jobExcerpt,
-        salary: {
-          min: job.annualSalaryMin,
-          max: job.annualSalaryMax,
-          currency: job.salaryCurrency,
-        },
-        location: job.jobGeo,
-        jobType: job.jobType,
-        industry: job.jobIndustry,
-        experienceLevel: job.jobLevel,
-        publishedAt: parseDate(job.pubDate),
-        source: "Jobicy",
-      };
-    case "Himalayas":
-      return {
-        sourceId: job.id,
-        sourceUrl: job.url,
-        title: job.title,
-        company: {
-          name: job.companyName,
-          logo: job.companyLogo,
-        },
-        description: job.description,
-        location: job.location,
-        jobType: job.type,
-        salary: {
-          min: job.salaryMin,
-          max: job.salaryMax,
-          currency: job.salaryCurrency,
-        },
-        publishedAt: parseDate(job.publishedAt),
-        source: "Himalayas",
-      };
-    default:
-      throw new Error(`Unknown job source: ${source}`);
-  }
-};
-
-// Fetch jobs from external APIs and store them in the database
-export const fetchAndStoreJobs = async (req, res, next) => {
+export const fetchAndStoreJobs = async () => {
   try {
-    const apis = [
-      {
-        url: "https://himalayas.app/jobs/api",
-        source: "Himalayas",
-      },
-    ];
+    let page = 1;
+    let hasMoreJobs = true;
+    const limit = parseInt(process.env.API_LIMIT) || 100; // Use environment variable or default to 5000
+    const MAX_PAGES = parseInt(process.env.MAX_PAGES) || 100; // Use environment variable or default to 100
+    const API_URL =
+      process.env.REMOTIVE_API_URL || "https://remotive.com/api/remote-jobs";
+    const RATE_LIMIT_DELAY = parseInt(process.env.RATE_LIMIT_DELAY) || 1000; // Use environment variable or default to 1 second
 
-    for (const api of apis) {
-      console.log(`Fetching jobs from ${api.source}...`);
-      const data = await fetchWithRetry(api.url);
-      let jobs;
+    while (hasMoreJobs && page <= MAX_PAGES) {
+      try {
+        const response = await axios.get(API_URL, {
+          params: { limit, page },
+        });
 
-      if (api.source === "Himalayas") {
-        jobs = data.jobs;
-      } else {
-        jobs = data.data || data;
-      }
+        const jobs = response.data.jobs;
 
-      if (!Array.isArray(jobs)) {
-        console.error(`Invalid response from ${api.source} API:`, jobs);
-        continue;
-      }
-
-      for (const job of jobs) {
-        const normalizedJob = normalizeJobData(job, api.source);
-        console.log(
-          `Normalized job data for ${normalizedJob.title}:`,
-          JSON.stringify(normalizedJob, null, 2)
-        );
-
-        try {
-          await Job.findOneAndUpdate(
-            { sourceId: normalizedJob.sourceId },
-            normalizedJob,
-            { upsert: true, new: true }
-          );
-        } catch (error) {
-          console.error(`Error saving job ${normalizedJob.title}:`, error);
+        if (jobs.length === 0) {
+          hasMoreJobs = false;
+          break;
         }
+
+        for (const job of jobs) {
+          if (!job.title || !job.company_name) {
+            logger.warn(
+              `Skipping job due to missing required fields: ${job.id}`
+            );
+            continue;
+          }
+
+          const existingJob = await Job.findOne({
+            sourceId: job.id.toString(),
+          });
+
+          if (!existingJob) {
+            const salary = parseSalary(job.salary);
+            const newJob = new Job({
+              sourceId: job.id.toString(),
+              sourceUrl: job.url,
+              title: job.title,
+              company: {
+                name: job.company_name,
+                logo: job.company_logo_url,
+              },
+              description: sanitizeHtml(job.description, sanitizeOptions),
+              excerpt: sanitizeHtml(job.description, sanitizeOptions).substring(
+                0,
+                255
+              ),
+              salary: {
+                min: salary.min,
+                max: salary.max,
+                currency: "USD", // Assuming USD, adjust if the API provides currency info
+              },
+              location: job.candidate_required_location || "Remote",
+              remote: true, // Remotive only lists remote jobs
+              jobType: determineJobType(job.job_type),
+              industry: job.category,
+              experienceLevel: "", // Not provided by Remotive API
+              visaSponsorship: false, // Not provided by Remotive API
+              publishedAt: new Date(job.publication_date),
+              source: "Remotive",
+            });
+
+            await newJob.save();
+            logger.info(`Saved job: ${newJob.title}`);
+          }
+        }
+
+        page++;
+
+        // Implement rate limiting
+        await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_DELAY));
+      } catch (error) {
+        if (error.response) {
+          logger.error(
+            `API error on page ${page}: ${error.response.status} - ${error.response.data}`
+          );
+        } else if (error.request) {
+          logger.error(`Network error on page ${page}:`, error.message);
+        } else {
+          logger.error(`Error on page ${page}:`, error.message);
+        }
+        // Continue to next page even if there's an error
+        page++;
       }
-
-      await delay(5000);
     }
 
-    if (res) {
-      res.status(200).json({
-        success: true,
-        message: "Jobs fetched and stored successfully",
-      });
-    } else {
-      console.log("Jobs fetched and stored successfully");
-    }
+    logger.info("Job fetching and storing completed");
   } catch (error) {
-    console.error("Error fetching jobs:", error);
-    if (next) {
-      next(error);
-    } else {
-      throw error;
-    }
+    logger.error("Fatal error in fetchAndStoreJobs:", error);
   }
 };
 
-// Get all jobs with filtering and pagination
-export const getJobs = async (req, res, next) => {
+// Function to get jobs with pagination and filtering
+export const getJobs = async (req, res) => {
   try {
-    const page = parseInt(req.query.page, 10) || 1;
-    const limit = parseInt(req.query.limit, 10) || 10;
-    const startIndex = (page - 1) * limit;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
 
-    const query = {};
-
+    const filter = {};
     if (req.query.search) {
-      query.$text = { $search: req.query.search };
+      filter.$or = [
+        { title: { $regex: req.query.search, $options: "i" } },
+        // { "company.name": { $regex: req.query.search, $options: "i" } },
+        // { description: { $regex: req.query.search, $options: "i" } },
+      ];
     }
-
-    if (req.query.jobType) {
-      query.jobType = req.query.jobType;
-    }
-
     if (req.query.location) {
-      query.location = { $regex: req.query.location, $options: "i" };
+      filter.location = { $regex: req.query.location, $options: "i" };
     }
-
-    if (req.query.industry) {
-      query.industry = { $regex: req.query.industry, $options: "i" };
+    if (req.query.jobType) {
+      filter.jobType = { $in: req.query.jobType.split(",") };
     }
-
     if (req.query.experienceLevel) {
-      query.experienceLevel = {
-        $regex: req.query.experienceLevel,
-        $options: "i",
-      };
+      filter.experienceLevel = { $in: req.query.experienceLevel.split(",") };
+    }
+    if (req.query.salaryMin || req.query.salaryMax) {
+      filter.salary = {};
+      if (req.query.salaryMin)
+        filter.salary.$gte = parseInt(req.query.salaryMin);
+      if (req.query.salaryMax)
+        filter.salary.$lte = parseInt(req.query.salaryMax);
     }
 
-    if (req.query.visaSponsorship) {
-      query.visaSponsorship = req.query.visaSponsorship === "true";
-    }
-
-    const total = await Job.countDocuments(query);
-    const jobs = await Job.find(query)
+    const jobs = await Job.find(filter)
       .sort({ publishedAt: -1 })
-      .skip(startIndex)
+      .skip(skip)
       .limit(limit);
 
-    res.status(200).json({
-      success: true,
-      count: jobs.length,
-      total,
-      page,
-      pages: Math.ceil(total / limit),
+    const total = await Job.countDocuments(filter);
+
+    res.json({
       data: jobs,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+      totalJobs: total,
     });
   } catch (error) {
-    next(error);
+    logger.error("Error in getJobs:", error);
+    res.status(500).json({ message: "Error fetching jobs" });
   }
 };
 
-// Get a single job
-export const getJob = async (req, res, next) => {
+// Function to get a single job by ID
+export const getJob = async (req, res) => {
   try {
     const job = await Job.findById(req.params.id);
-
     if (!job) {
-      return next(new ErrorResponse("Job not found", 404));
+      return res.status(404).json({ message: "Job not found" });
     }
-
-    res.status(200).json({
-      success: true,
-      data: job,
-    });
+    res.json(job);
   } catch (error) {
-    next(error);
+    logger.error("Error in getJob:", error);
+    res.status(500).json({ message: "Error fetching job" });
   }
+};
+
+// Function to get job suggestions for autocomplete
+export const getJobSuggestions = async (req, res) => {
+  try {
+    const query = req.query.query;
+    const suggestions = await Job.find({
+      title: { $regex: query, $options: "i" },
+    })
+      .distinct("title")
+      .limit(10);
+    res.json(suggestions);
+  } catch (error) {
+    logger.error("Error in getJobSuggestions:", error);
+    res.status(500).json({ message: "Error fetching job suggestions" });
+  }
+};
+
+export default {
+  fetchAndStoreJobs,
+  getJobs,
+  getJob,
+  getJobSuggestions,
 };
