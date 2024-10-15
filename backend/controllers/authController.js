@@ -23,9 +23,7 @@ export const signin = async (req, res, next) => {
     const { email, password } = req.body;
     // Check if email and password is provided
     if (!email) {
-      return next(
-        new ErrorResponse("Please provide add your email address", 403)
-      );
+      return next(new ErrorResponse("Please provide your email address", 403));
     }
 
     if (!password) {
