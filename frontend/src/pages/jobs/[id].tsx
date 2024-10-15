@@ -1,29 +1,13 @@
-import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/router";
 import Layout from "../../components/Layout";
+import { getJob, Job } from "../../services/jobService";
 import { motion } from "framer-motion";
-import { getJob, addJobToHistory } from "../../services/api";
-
-interface Job {
-  _id: string;
-  title: string;
-  company: {
-    name: string;
-  };
-  location: string;
-  salary?: {
-    min: number;
-    max: number;
-    currency: string;
-  };
-  description: string;
-}
 
 export default function JobDetail() {
   const router = useRouter();
   const { id } = router.query;
   const [job, setJob] = useState<Job | null>(null);
-  //   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -35,8 +19,8 @@ export default function JobDetail() {
 
   const fetchJob = async () => {
     try {
-      const response = await getJob(id as string);
-      setJob(response.data.data as Job);
+      const jobData = await getJob(id as string);
+      setJob(jobData);
       setLoading(false);
     } catch (err) {
       setError("Error fetching job details");
@@ -44,55 +28,40 @@ export default function JobDetail() {
     }
   };
 
-  const handleApply = async () => {
-    if (job) {
-      try {
-        await addJobToHistory({
-          title: job.title,
-          company: job.company.name,
-          applicationStatus: "pending",
-        });
-        router.push("/dashboard");
-      } catch (err) {
-        setError("Error applying for job");
-      }
-    }
-  };
-
   if (loading)
     return (
       <Layout title="Loading...">
-        <div>Loading...</div>
+        <div className="container mx-auto p-4">Loading...</div>
       </Layout>
     );
   if (error)
     return (
       <Layout title="Error">
-        <div>{error}</div>
+        <div className="container mx-auto p-4">{error}</div>
       </Layout>
     );
   if (!job)
     return (
       <Layout title="Job Not Found">
-        <div>Job not found</div>
+        <div className="container mx-auto p-4">Job not found</div>
       </Layout>
     );
 
   return (
     <Layout title={`RemoteHub - ${job.title}`}>
-      <div className="bg-gray-100 min-h-screen py-12">
-        <div className="max-w-3xl mx-auto bg-white shadow-md rounded-lg overflow-hidden">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="px-6 py-8"
-          >
+      <div className="container mx-auto p-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="bg-white shadow-lg rounded-lg overflow-hidden"
+        >
+          <div className="p-6">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               {job.title}
             </h1>
             <p className="text-xl text-gray-600 mb-4">{job.company.name}</p>
-            <div className="flex items-center text-gray-500 mb-6">
+            <div className="flex items-center text-gray-500 mb-4">
               <svg
                 className="h-5 w-5 mr-2"
                 fill="none"
@@ -114,32 +83,36 @@ export default function JobDetail() {
               </svg>
               {job.location}
             </div>
-            <div className="bg-gray-100 rounded-lg p-4 mb-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-2">
-                Salary Range
-              </h2>
-              <p className="text-gray-700">
-                {job.salary
-                  ? `$${job.salary.min} - $${job.salary.max} ${job.salary.currency}`
-                  : "Not specified"}
-              </p>
-            </div>
-            <div className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            <div className="mb-6">
+              <h2 className="text-2xl font-semibold text-gray-900 mb-2">
                 Job Description
               </h2>
-              <p className="text-gray-700">{job.description}</p>
+              <div className="prose max-w-none text-gray-700 mb-4 line-clamp-3">
+                <p>{job.description}</p>
+              </div>
+            </div>
+            <div className="mb-6">
+              <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+                Salary
+              </h2>
+              <p className="text-gray-700">
+                {job.salary.min && job.salary.max
+                  ? `$${job.salary.min.toLocaleString()} - $${job.salary.max.toLocaleString()}`
+                  : "Salary not specified"}
+              </p>
             </div>
             <div className="flex justify-center">
-              <button
-                className="bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                onClick={handleApply}
+              <a
+                href={job.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
-                Apply Now
-              </button>
+                Apply for this job
+              </a>
             </div>
-          </motion.div>
-        </div>
+          </div>
+        </motion.div>
       </div>
     </Layout>
   );
