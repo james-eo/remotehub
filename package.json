@@ -158,6 +158,7 @@
     "start": "concurrently \"npm run backend\" \"npm run frontend\"",
     "backend": "cd backend && npm start",
     "frontend": "cd frontend && npx next dev",
+    "build": "next build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
