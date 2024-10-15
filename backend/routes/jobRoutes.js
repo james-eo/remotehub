@@ -3,7 +3,9 @@ import {
   getJobs,
   getJob,
   fetchAndStoreJobs,
+  // getJobRecommendations,
 } from "../controllers/jobController.js";
+// import { fetchAndStoreJobs } from "../services/jobService.js";
 // import {
 //   createJob,
 //   singleJob,
@@ -26,8 +28,10 @@ const router = express.Router();
 
 // /api/jobs/list
 // router.get("/jobs/list", listJobs);
+// router.get("/", getJobs);
 router.get("/jobs", getJobs);
 router.get("/jobs/:id", getJob);
 router.post("/jobs/fetch", isAuthenticated, isAdmin, fetchAndStoreJobs);
+// router.get("/recommendations", isAuthenticated, getJobRecommendations);
 
 export default router;
