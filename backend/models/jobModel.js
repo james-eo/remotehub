@@ -54,9 +54,22 @@ const jobSchema = new Schema(
       type: String,
       required: true,
     },
+    remote: {
+      type: Boolean,
+      default: false,
+    },
     jobType: {
       type: String,
-      enum: ["Full-time", "Part-time", "Contract", "Internship"],
+      enum: [
+        "Full-time",
+        "Part-time",
+        "Contract",
+        "Internship",
+        "professional / experienced",
+        "executive",
+        "berufserfahren",
+        "teamleitung",
+      ],
       required: true,
     },
     industry: {
