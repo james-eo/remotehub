@@ -26,6 +26,8 @@ export interface Job {
     min: number;
     max: number;
     currency: string;
+    raw: string;
+    benefits: string[];
   };
   jobType: string;
   experienceLevel: string;
