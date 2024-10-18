@@ -29,7 +29,7 @@ export default function Signup() {
     try {
       const response = await signup(formData);
       if (response.data.success) {
-        router.push("/dashboard");
+        router.push("/");
       }
     } catch (err) {
       console.log(err);

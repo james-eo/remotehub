@@ -28,6 +28,58 @@ export default function JobDetail() {
     }
   };
 
+  const renderDescription = (description: any[]) => {
+    let currentSection = "";
+    return description.map((item, index) => {
+      switch (item.type) {
+        case "h1":
+        case "h2":
+        case "h3":
+        case "h4":
+        case "h5":
+        case "h6":
+          const HeadingTag = item.type as keyof JSX.IntrinsicElements;
+          currentSection = item.children[0];
+          return (
+            <HeadingTag
+              key={index}
+              className="text-xl font-semibold text-gray-900 mt-6 mb-3"
+            >
+              {item.children[0]}
+            </HeadingTag>
+          );
+        case "p":
+          return (
+            <p key={index} className="text-gray-700 mb-4">
+              {item.children[0]}
+            </p>
+          );
+        case "ul":
+          return (
+            <ul key={index} className="list-disc list-inside mb-4 pl-4">
+              {item.children.map((li: any, liIndex: number) => (
+                <li key={liIndex} className="text-gray-700 mb-2">
+                  {li.children[0]}
+                </li>
+              ))}
+            </ul>
+          );
+        case "ol":
+          return (
+            <ol key={index} className="list-decimal list-inside mb-4 pl-4">
+              {item.children.map((li: any, liIndex: number) => (
+                <li key={liIndex} className="text-gray-700 mb-2">
+                  {li.children[0]}
+                </li>
+              ))}
+            </ol>
+          );
+        default:
+          return null;
+      }
+    });
+  };
+
   if (loading)
     return (
       <Layout title="Loading...">
@@ -84,11 +136,11 @@ export default function JobDetail() {
               {job.location}
             </div>
             <div className="mb-6">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+              <h2 className="text-2xl font-semibold text-gray-900 mb-4">
                 Job Description
               </h2>
-              <div className="prose max-w-none text-gray-700 mb-4 line-clamp-3">
-                <p>{job.description}</p>
+              <div className="prose max-w-none">
+                {renderDescription(job.description)}
               </div>
             </div>
             <div className="mb-6">
@@ -97,8 +149,10 @@ export default function JobDetail() {
               </h2>
               <p className="text-gray-700">
                 {job.salary.min && job.salary.max
-                  ? `$${job.salary.min.toLocaleString()} - $${job.salary.max.toLocaleString()}`
-                  : "Salary not specified"}
+                  ? `$${job.salary.min.toLocaleString()} - $${job.salary.max.toLocaleString()} ${
+                      job.salary.currency
+                    }`
+                  : job.salary.raw || "Salary not specified"}
               </p>
             </div>
             <div className="flex justify-center">
