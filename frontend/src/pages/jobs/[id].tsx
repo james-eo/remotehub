@@ -28,38 +28,30 @@ export default function JobDetail() {
     }
   };
 
-  const renderDescription = (description: any[]) => {
-    let currentSection = "";
-    return description.map((item, index) => {
+  const renderDescription = (description: Job["description"]) => {
+    return description.sections.map((item, index) => {
       switch (item.type) {
-        case "h1":
-        case "h2":
-        case "h3":
-        case "h4":
-        case "h5":
-        case "h6":
-          const HeadingTag = item.type as keyof JSX.IntrinsicElements;
-          currentSection = item.children[0];
+        case "heading":
           return (
-            <HeadingTag
+            <div
               key={index}
               className="text-xl font-semibold text-gray-900 mt-6 mb-3"
             >
-              {item.children[0]}
-            </HeadingTag>
+              {item.content}
+            </div>
           );
-        case "p":
+        case "paragraph":
           return (
             <p key={index} className="text-gray-700 mb-4">
-              {item.children[0]}
+              {item.content}
             </p>
           );
         case "ul":
           return (
             <ul key={index} className="list-disc list-inside mb-4 pl-4">
-              {item.children.map((li: any, liIndex: number) => (
+              {item.items?.map((text, liIndex) => (
                 <li key={liIndex} className="text-gray-700 mb-2">
-                  {li.children[0]}
+                  {text}
                 </li>
               ))}
             </ul>
@@ -67,9 +59,9 @@ export default function JobDetail() {
         case "ol":
           return (
             <ol key={index} className="list-decimal list-inside mb-4 pl-4">
-              {item.children.map((li: any, liIndex: number) => (
+              {item.items?.map((text, liIndex) => (
                 <li key={liIndex} className="text-gray-700 mb-2">
-                  {li.children[0]}
+                  {text}
                 </li>
               ))}
             </ol>
