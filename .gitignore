@@ -46,3 +46,6 @@ dist-ssr
 .env
 .next
 .env.local
+
+
+package-lock.json
