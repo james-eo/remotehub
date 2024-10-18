@@ -6,12 +6,20 @@ export interface Job {
   _id: string;
   sourceUrl: string;
   title: string;
+  tags: string[];
   company: {
     name: string;
     logo: string;
   };
   location: string;
-  description: string;
+  description: {
+    sections: Array<{
+      type: "heading" | "paragraph" | "ul" | "ol";
+      level?: number;
+      content?: string;
+      items?: string[];
+    }>;
+  };
   excerpt: string;
 
   salary: {
@@ -39,8 +47,18 @@ export interface JobFilters {
   // salaryMax?: number;
   experienceLevel?: string[];
   jobType?: string[];
+  category?: string[];
+  tags?: string[];
   page?: number;
   limit?: number;
+}
+
+export interface FilterDropdownProps {
+  label: string;
+  options: string[];
+  value: string | string[];
+  onChange: (value: string | string[]) => void;
+  multiple?: boolean;
 }
 
 export const getJobs = async (filters: JobFilters): Promise<JobsResponse> => {
@@ -56,6 +74,13 @@ export const getJob = async (id: string): Promise<Job> => {
 export const getJobSuggestions = async (query: string): Promise<string[]> => {
   const response = await axios.get(`${API_URL}/jobs/suggestions`, {
     params: { query },
+  });
+  return response.data;
+};
+
+export const getUniqueValues = async (field: string): Promise<string[]> => {
+  const response = await axios.get(`${API_URL}/jobs/unique-values`, {
+    params: { field },
   });
   return response.data;
 };
