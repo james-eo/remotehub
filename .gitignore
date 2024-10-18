@@ -45,3 +45,6 @@ dist-ssr
 # Environment
 .env
 .env.local
+
+
+package-lock.json
