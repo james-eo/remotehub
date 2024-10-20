@@ -1,6 +1,5 @@
 import axios from "axios";
 import sanitizeHtml from "sanitize-html";
-import https from "https";
 import Job from "../models/jobModel.js";
 
 // Helper functions

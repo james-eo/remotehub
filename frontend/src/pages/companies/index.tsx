@@ -3,6 +3,7 @@ import Layout from "../../components/Layout";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { getCompanies } from "../../services/api";
+import Image from "next/image";
 
 interface Company {
   _id: string;
@@ -24,9 +25,9 @@ export default function Companies() {
     try {
       setLoading(true);
       const response = await getCompanies();
-      setCompanies(response.data);
+      setCompanies(response.data.data);
       setLoading(false);
-    } catch (err) {
+    } catch {
       setError("Error fetching companies");
       setLoading(false);
     }
@@ -53,10 +54,12 @@ export default function Companies() {
                   transition={{ duration: 0.5 }}
                   className="bg-white shadow-md rounded-lg p-6 hover:shadow-lg transition-shadow duration-300"
                 >
-                  <img
+                  <Image
                     src={company.logo}
                     alt={`${company.name} logo`}
                     className="w-16 h-16 object-contain mb-4"
+                    width={64}
+                    height={64}
                   />
                   <h2 className="text-xl font-semibold text-gray-900 mb-2">
                     {company.name}

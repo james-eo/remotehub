@@ -1,9 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/router";
 import Layout from "../../components/Layout";
 import { getCompany } from "../../services/api";
 import { motion } from "framer-motion";
 import Image from "next/image";
+
+interface Job {
+  _id: string;
+  title: string;
+  location: string;
+}
 
 interface Company {
   _id: string;
@@ -12,32 +18,33 @@ interface Company {
   logo: string;
   website: string;
   location: string;
-  jobs: any[];
+  jobs: Job[];
 }
 
 export default function CompanyPage() {
   const router = useRouter();
   const { id } = router.query;
+
   const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const fetchCompanyData = useCallback(async () => {
+    try {
+      const response = await getCompany(id as string);
+      setCompany(response.data.data);
+      setLoading(false);
+    } catch {
+      setError("Error fetching company data");
+      setLoading(false);
+    }
+  }, [id]);
 
   useEffect(() => {
     if (id) {
       fetchCompanyData();
     }
-  }, [id]);
-
-  const fetchCompanyData = async () => {
-    try {
-      const response = await getCompany(id as string);
-      setCompany(response.data);
-      setLoading(false);
-    } catch (err) {
-      setError("Error fetching company data");
-      setLoading(false);
-    }
-  };
+  }, [id, fetchCompanyData]);
 
   if (loading) {
     return <div>Loading...</div>;
@@ -62,7 +69,7 @@ export default function CompanyPage() {
                 <Image
                   className="h-20 w-20 rounded-full"
                   src={company?.logo || "/placeholder-company.jpg"}
-                  alt=""
+                  alt={`${company?.name} logo`}
                   width={80}
                   height={80}
                 />

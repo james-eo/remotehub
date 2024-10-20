@@ -1,5 +1,5 @@
 import React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/router";
 import Layout from "../../components/Layout";
 import { motion } from "framer-motion";
@@ -15,6 +15,11 @@ import {
   getUniqueValues,
 } from "../../services/jobService";
 import { Listbox, Transition } from "@headlessui/react";
+
+interface JobsQueryParams {
+  search?: string;
+  page?: string;
+}
 
 const jobTypes = ["Full-time", "Part-time", "Contract", "Internship"];
 const experienceLevels = ["Entry", "Mid", "Senior"];
@@ -40,28 +45,33 @@ export default function Jobs() {
   const [uniqueCategories, setUniqueCategories] = useState<string[]>([]);
   const [uniqueTags, setUniqueTags] = useState<string[]>([]);
 
+  // Initialize state from URL parameters
   useEffect(() => {
-    const { query } = router;
-    if (query.search) setSearchTerm(query.search as string);
-    if (query.page) setPage(parseInt(query.page as string));
-    fetchJobs();
-    fetchUniqueValues();
-  }, [router.query, filters]);
+    if (!router.isReady) return;
 
-  const fetchUniqueValues = async () => {
+    const { query } = router as { query: JobsQueryParams };
+    setSearchTerm(query.search || "");
+    setPage(query.page ? parseInt(query.page) : 1);
+  }, [router.isReady, router.query, router]);
+
+  const fetchUniqueValues = useCallback(async () => {
     try {
-      const locations = await getUniqueValues("location");
-      const categories = await getUniqueValues("category");
-      const tags = await getUniqueValues("tags");
+      const [locations, categories, tags] = await Promise.all([
+        getUniqueValues("location"),
+        getUniqueValues("category"),
+        getUniqueValues("tags"),
+      ]);
       setUniqueLocations(locations);
       setUniqueCategories(categories);
       setUniqueTags(tags);
-    } catch (err) {
-      console.error("Error fetching unique values:", err);
+    } catch (error) {
+      console.error("Error fetching unique values:", error);
     }
-  };
+  }, []);
 
-  const fetchJobs = async () => {
+  const fetchJobs = useCallback(async () => {
+    if (!router.isReady) return;
+
     try {
       setLoading(true);
       const response = await getJobs({
@@ -71,21 +81,38 @@ export default function Jobs() {
       });
       setJobs(response.data);
       setTotalPages(response.totalPages);
-      setLoading(false);
-    } catch (err) {
-      console.error("Error fetching jobs:", err);
-      setError("Error fetching jobs");
+    } catch (error) {
+      console.error("Error fetching jobs:", error);
+      setError(error instanceof Error ? error.message : "Error fetching jobs");
+    } finally {
       setLoading(false);
     }
-  };
+  }, [searchTerm, page, filters, router.isReady]);
 
-  const handleSearch = async (e: React.FormEvent) => {
+  useEffect(() => {
+    fetchJobs();
+  }, [fetchJobs]);
+
+  useEffect(() => {
+    fetchUniqueValues();
+  }, [fetchUniqueValues]);
+
+  const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setPage(1);
-    router.push({
-      pathname: "/jobs",
-      query: { ...router.query, search: searchTerm, page: 1 },
-    });
+    const newQuery = {
+      ...router.query,
+      search: searchTerm,
+      page: "1",
+    };
+
+    router.push(
+      {
+        pathname: "/jobs",
+        query: newQuery,
+      },
+      undefined,
+      { shallow: true }
+    );
   };
 
   const handleFilterChange = (
@@ -109,15 +136,23 @@ export default function Jobs() {
     });
     setSearchTerm("");
     setPage(1);
-    router.push("/jobs");
+    router.push("/jobs", undefined, { shallow: true });
   };
 
   const handlePageChange = (newPage: number) => {
-    setPage(newPage);
-    router.push({
-      pathname: "/jobs",
-      query: { ...router.query, page: newPage },
-    });
+    const newQuery = {
+      ...router.query,
+      page: newPage.toString(),
+    };
+
+    router.push(
+      {
+        pathname: "/jobs",
+        query: newQuery,
+      },
+      undefined,
+      { shallow: true }
+    );
   };
 
   return (
@@ -138,7 +173,7 @@ export default function Jobs() {
                   placeholder="Search jobs..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="flex-grow px-4 py-2 border border-gray-300 rounded-l-md focus:ring-indigo-500 focus:border-indigo-500"
+                  className="flex-grow px-4 py-2 border border-gray-300 rounded-l-md focus:ring-indigo-500 text-gray-200 focus:border-indigo-500"
                 />
                 <button
                   type="submit"

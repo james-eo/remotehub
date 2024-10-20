@@ -1,5 +1,6 @@
 import Resume from "../models/resumeModel.js";
 import ErrorResponse from "../utils/errorResponse.js";
+import Job from "../models/jobModel.js";
 
 export const getResume = async (req, res, next) => {
   try {

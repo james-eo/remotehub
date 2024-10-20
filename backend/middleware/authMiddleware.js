@@ -16,6 +16,7 @@ export const isAuthenticated = async (req, res, next) => {
     req.user = await User.findById(decoded.id);
     next();
   } catch (error) {
+    console.log("JWT verification failed", error);
     return next(new ErrorResponse("Unauthorized - Access denied", 401));
   }
 };

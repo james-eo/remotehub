@@ -30,16 +30,16 @@ export default function AboutPage() {
                     Our Mission
                   </h2>
                   <p className="text-gray-600 mb-4">
-                    At RemoteHub, we're dedicated to connecting talented
+                    At RemoteHub, we&#39;re dedicated to connecting talented
                     professionals with exciting remote job opportunities across
                     the globe. Our mission is to empower individuals to build
                     fulfilling careers while enjoying the flexibility and
                     freedom of remote work.
                   </p>
                   <p className="text-gray-600 mb-4">
-                    We believe that the future of work is remote, and we're here
-                    to make that transition as smooth as possible for both job
-                    seekers and employers.
+                    We believe that the future of work is remote, and we&#39;re
+                    here to make that transition as smooth as possible for both
+                    job seekers and employers.
                   </p>
                   <h2 className="text-2xl font-semibold text-gray-900 mb-4">
                     Our Values
