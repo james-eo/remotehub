@@ -16,6 +16,8 @@ import resumeRoutes from "./routes/resumeRoutes.js";
 // Load environment variables
 dotenv.config();
 
+// Start server
+const PORT = process.env.PORT || 5000;
 // Connect to database
 connectDB();
 
@@ -56,6 +58,4 @@ cron.schedule("0 */6 * * *", async () => {
 // Error handling middleware
 app.use(errorHandler);
 
-// Start server
-const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
