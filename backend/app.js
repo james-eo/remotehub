@@ -28,15 +28,9 @@ app.use(cookieParser());
 
 // Middleware
 
-app.use(
-  cors({
-    origin: [
-      "https://localhost:3000",
-      "https://remotehub-485cycvgn-jamesejike04-gmailcoms-projects.vercel.app",
-    ],
-    credentials: true,
-  })
-);
+app.use(cors({
+  origin: 'https://remotehub-485cycvgn-jamesejike04-gmailcoms-projects.vercel.app'
+}));
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
