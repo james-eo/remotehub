@@ -1,11 +1,13 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "Job Board",
+  "description": "remotehub",
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "nodemon app.js"
+    "start": "nodemon app.js",
+    "lint": "eslint .",
+    "test": "jest --coverage"
   },
   "author": "James Okonkwo",
   "license": "ISC",
@@ -26,5 +28,12 @@
     "nodemon": "^3.1.7",
     "sanitize-html": "^2.13.1",
     "winston": "^3.15.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.13.0",
+    "eslint": "^9.13.0",
+    "globals": "^15.11.0",
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0"
   }
 }

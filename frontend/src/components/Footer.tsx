@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 const footerSections = [
   {
@@ -36,7 +37,14 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8">
         <div className="xl:grid xl:grid-cols-3 xl:gap-8">
           <div className="space-y-8 xl:col-span-1">
-            <img className="h-10" src="/logo-white.svg" alt="RemoteHub" />
+            <Image
+              className="h-10"
+              src="/logo-white.svg"
+              alt="RemoteHub"
+              width={40}
+              height={40}
+              layout="fixed"
+            />
             <p className="text-gray-400 text-base">
               Connecting top talent with remote opportunities worldwide.
             </p>

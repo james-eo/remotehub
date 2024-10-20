@@ -3,6 +3,7 @@ import Layout from "../components/Layout";
 import { motion } from "framer-motion";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
+import Image from "next/image";
 import { getJobs } from "../services/api";
 import { useRouter } from "next/router";
 
@@ -20,8 +21,7 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState("");
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [page, setPage] = useState(1);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchJobs();
@@ -32,29 +32,57 @@ export default function Home() {
       const response = await getJobs({ limit: 4 });
       setJobs(response.data.data);
       setLoading(false);
-    } catch (err) {
-      setError("Error fetching jobs");
+    } catch (error) {
+      console.error("Error in fetchJobs:", error);
+      setError("Error fetching jobs. Please try again later.");
       setLoading(false);
     }
   };
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    setPage(1);
     router.push({
       pathname: "/jobs",
-      query: { ...router.query, search: searchTerm, page: 1 },
+      query: { ...router.query, search: searchTerm },
     });
   };
 
   return (
     <Layout>
+      {error && (
+        <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+          <div className="bg-red-50 border-l-4 border-red-400 p-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg
+                  className="h-5 w-5 text-red-400"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-red-700">{error}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="bg-white">
         <div className="relative bg-indigo-800">
           <div className="absolute inset-0">
-            <img
-              className="w-full h-full object-cover"
+            <Image
               src="/hero-background.jpg"
               alt="Remote work"
+              layout="fill"
+              objectFit="cover"
             />
             <div
               className="absolute inset-0 bg-indigo-800 mix-blend-multiply"
@@ -94,7 +122,7 @@ export default function Home() {
                     id="search"
                     type="text"
                     placeholder="Search jobs..."
-                    className="block w-full px-4 py-3 rounded-md border-0 text-base text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-300 focus:ring-offset-indigo-700"
+                    className="block w-full px-4 py-3 rounded-md border-0 text-base text-gray-200 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-300 focus:ring-offset-indigo-700"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -104,7 +132,7 @@ export default function Home() {
                     type="submit"
                     className="block w-full py-3 px-4 rounded-md shadow bg-indigo-500 text-white font-medium hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-300 focus:ring-offset-indigo-700 sm:text-sm"
                   >
-                    Search
+                    <MagnifyingGlassIcon className="h-5 w-5" />
                   </button>
                 </div>
               </form>
