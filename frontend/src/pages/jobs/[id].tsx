@@ -12,21 +12,23 @@ export default function JobDetail() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (id) {
-      fetchJob();
-    }
-  }, [id]);
+    async function fetchJob() {
+      if (!id) return;
 
-  const fetchJob = async () => {
-    try {
-      const jobData = await getJob(id as string);
-      setJob(jobData);
-      setLoading(false);
-    } catch (err) {
-      setError("Error fetching job details");
-      setLoading(false);
+      try {
+        const jobData = await getJob(id as string);
+        setJob(jobData);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Error fetching job details"
+        );
+      } finally {
+        setLoading(false);
+      }
     }
-  };
+
+    fetchJob();
+  }, [id]);
 
   const renderDescription = (description: Job["description"]) => {
     return description.sections.map((item, index) => {
@@ -72,24 +74,29 @@ export default function JobDetail() {
     });
   };
 
-  if (loading)
+  if (loading) {
     return (
       <Layout title="Loading...">
         <div className="container mx-auto p-4">Loading...</div>
       </Layout>
     );
-  if (error)
+  }
+
+  if (error) {
     return (
       <Layout title="Error">
         <div className="container mx-auto p-4">{error}</div>
       </Layout>
     );
-  if (!job)
+  }
+
+  if (!job) {
     return (
       <Layout title="Job Not Found">
         <div className="container mx-auto p-4">Job not found</div>
       </Layout>
     );
+  }
 
   return (
     <Layout title={`RemoteHub - ${job.title}`}>

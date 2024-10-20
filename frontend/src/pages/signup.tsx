@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
 import Layout from "../components/Layout";
-import { signup, googleLogin, githubLogin } from "../services/api";
+import { signup } from "../services/api";
 import { motion } from "framer-motion";
 import Link from "next/link";
 
@@ -29,7 +29,7 @@ export default function Signup() {
     try {
       const response = await signup(formData);
       if (response.data.success) {
-        router.push("/");
+        router.push("/dashboard");
       }
     } catch (err) {
       console.log(err);

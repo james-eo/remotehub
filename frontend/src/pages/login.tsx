@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
 import Layout from "../components/Layout";
-import { login, googleLogin, githubLogin } from "../services/api";
+import { login } from "../services/api";
 import { motion } from "framer-motion";
 import Link from "next/link";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [loginError, setLoginError] = useState("");
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -18,9 +18,9 @@ export default function Login() {
       if (response.data.success) {
         router.push("/dashboard");
       }
-    } catch (err) {
-      console.log(err);
-      setError("Invalid credentials");
+    } catch (error) {
+      console.log("Login Error", error);
+      setLoginError("Invalid credentials");
     }
   };
 
@@ -35,6 +35,9 @@ export default function Login() {
   return (
     <Layout title="RemoteHub - Log In">
       <div className="min-h-screen bg-gray-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+        <div>
+          {loginError && <div className="text-red-500 mb-4">{loginError}</div>}
+        </div>
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Log in to your account
@@ -183,7 +186,7 @@ export default function Login() {
 
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">
-                Don't have an account?{" "}
+                {"Don't have an account? "}
                 <Link
                   href="/signup"
                   className="font-medium text-indigo-600 hover:text-indigo-500"

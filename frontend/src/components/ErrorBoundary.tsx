@@ -14,6 +14,7 @@ class ErrorBoundary extends Component<Props, State> {
   };
 
   // Update state when an error occurs to display fallback UI
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public static getDerivedStateFromError(_: Error): State {
     return { hasError: true };
   }
