@@ -29,7 +29,7 @@ app.use(cookieParser());
 // Middleware
 
 app.use(cors({
-  origin: 'https://remotehub-485cycvgn-jamesejike04-gmailcoms-projects.vercel.app'
+  origin: 'https://remotehub.vercel.app/'
 }));
 
 app.use(express.urlencoded({ extended: true }));
