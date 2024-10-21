@@ -29,7 +29,9 @@ app.use(cookieParser());
 // Middleware
 
 app.use(cors({
-  origin: 'https://remotehub.vercel.app/'
+  origin: 'https://remotehub.vercel.app',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(express.urlencoded({ extended: true }));
