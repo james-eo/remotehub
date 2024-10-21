@@ -1,11 +1,35 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://remotehub-backend.onrender.com";
 
 const api = axios.create({
   baseURL: API_URL,
   withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
+
+// Add a response interceptor
+api.interceptors.response.use(
+  response => response,
+  (error: AxiosError) => {
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      console.error("Data:", error.response.data);
+      console.error("Status:", error.response.status);
+      console.error("Headers:", error.response.headers);
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.error("Request:", error.request);
+    } else {
+      // Something happened in setting up the request that triggered an Error
+      console.error("Error:", error.message);
+    }
+    return Promise.reject(error);
+  }
+);
 
 interface UserData {
   email: string;
