@@ -30,11 +30,8 @@ app.use(cookieParser());
 
 app.use(
   cors({
-    origin: [
-      "https://localhost:3000",
-      "https://remotehub-485cycvgn-jamesejike04-gmailcoms-projects.vercel.app",
-    ],
-    credentials: true,
+    origin: "http://localhost:3000", // Your frontend URL
+    credentials: true, // Allow credentials (cookies, etc.)
   })
 );
 
