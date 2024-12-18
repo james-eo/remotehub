@@ -84,11 +84,11 @@ RemoteHub is a sophisticated remote job board platform designed to compete with 
    ```
    # Start backend server
    cd backend
-   npm run dev
+   npm start
 
    # Start frontend server
    cd frontend
-   npm run dev
+   npx next dev
    ```
 
 5. Open `http://localhost:3000` in your browser to view the application.
@@ -101,22 +101,23 @@ Backend (`backend/.env`):
 
 ```
 PORT=5000
-MONGO_URI=your_mongodb_connection_string
-JWT_SECRET=your_jwt_secret
-JWT_EXPIRE=30d
-SENDGRID_API_KEY=your_sendgrid_api_key
-AFFINDA_API_KEY=your_affinda_api_key
-```
+MONGO_URI=mongodb+srv://james:yKCtHy81r6NEwTsU@jobbaordapi.sxuvd.mongodb.net/jobboard?retryWrites=true&w=majority&appName=jobbaordapi
+JWT_SECRET=oYsngNMDK2OPmg7iqJTyPqAhM0H+1Hb25QMdhXHTGMH5O4jQHssZW4cKXpkv8bTL
+ZPjomo7O25jTBMyk1f5xkg==
+
+JWT_EXPIRE=15dd
+NEXT_PUBLIC_API_URL=http://localhost:5000/api
+
+PORT=5000
 
 Frontend (`frontend/.env.local`):
 
 ```
-NEXT_PUBLIC_API_URL=http://localhost:5000/api
 ```
 
 ## Project Structure
 
-```
+
 remotehub/
 ├── backend/
 │   ├── controllers/
@@ -208,14 +209,14 @@ remotehub/
 
 ## Deployment
 
-1. Frontend (Vercel):
+1. Frontend (Render/Vercel):
 
    - Connect your GitHub repository to Vercel
    - Configure environment variables
    - Deploy
 
-2. Backend (Heroku):
-   - Create a new Heroku app
+2. Backend (Render/Heroku):
+   - Create a new nder/ReHeroku app
    - Connect your GitHub repository
    - Configure environment variables
    - Deploy

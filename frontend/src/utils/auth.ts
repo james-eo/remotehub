@@ -59,35 +59,3 @@ export const isAuthenticated = (): boolean => {
   }
 };
 
-// import { useEffect } from "react";
-// import { useRouter } from "next/router";
-// import { getCurrentUser } from "../services/api";
-
-// export function useAuth(redirectTo = "/login") {
-//   const router = useRouter();
-
-//   useEffect(() => {
-//     async function checkAuth() {
-//       try {
-//         await getCurrentUser();
-//       } catch (error) {
-//         router.push(redirectTo);
-//       }
-//     }
-//     checkAuth();
-//   }, [redirectTo, router]);
-// }
-
-// export const logout = async () => {
-//   // Clear any stored tokens or user data
-//   localStorage.removeItem("token");
-//   localStorage.removeItem("user");
-
-//   // If you're using cookies, you might want to clear them as well
-//   // document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
-
-//   // You might also want to make an API call to invalidate the token on the server
-//   // await api.post('/logout')
-// };
-
-// // ... rest of the existing code ...
