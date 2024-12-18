@@ -5,21 +5,19 @@ import {
   deleteUser,
   singleUser,
   updateUser,
+  getUserProfile,
+  updateUserProfile,
 } from "../controllers/userController.js";
 import { isAuthenticated, isAdmin } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// user routes
-// /api/user/allusers
 router.get("/allusers", isAuthenticated, isAdmin, allUsers);
-// /api/user/id
 router.get("/user/:id", isAuthenticated, singleUser);
-// /api/user/update/id
 router.put("/user/update/:id", isAuthenticated, updateUser);
-// /api/user/delete/id
 router.delete("/admin/user/delete/:id", isAuthenticated, isAdmin, deleteUser);
-// /api/user/jobhistory
 router.post("/user/jobhistory", isAuthenticated, userJobHistory);
+router.get("/profile", isAuthenticated, getUserProfile);
+router.put("/profile/update", isAuthenticated, updateUserProfile);
 
 export default router;
