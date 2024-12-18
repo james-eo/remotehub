@@ -22,18 +22,27 @@ export default function Signup() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match");
       return;
     }
+
     try {
       const response = await signup(formData);
-      if (response.data.success) {
+      if (response && response.data && response.data.success) {
         router.push("/dashboard");
+      } else {
+        setError("Signup failed. Please try again.");
       }
     } catch (err) {
-      console.log(err);
-      setError("Error creating account");
+      if (err instanceof Error) {
+        setError(err.message || "Error creating account");
+      } else {
+        setError("An unexpected error occurred");
+      }
+      console.error("Signup error:", err);
     }
   };
 
