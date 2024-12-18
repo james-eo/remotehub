@@ -61,7 +61,7 @@ RemoteHub is a sophisticated remote job board platform designed to compete with 
 1. Clone the repository:
 
    ```
-   git clone https://github.com/yourusername/remotehub.git
+   git clone https://github.com/james-eo/remotehub.git
    cd remotehub
    ```
 
