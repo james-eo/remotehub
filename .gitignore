@@ -44,6 +44,7 @@ dist-ssr
 
 # Environment
 .env
+.next
 .env.local
 
 
