@@ -28,11 +28,12 @@ app.use(cookieParser());
 
 // Middleware
 
-app.use(cors({
-  origin: 'https://remotehub.vercel.app',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+app.use(
+  cors({
+    origin: "http://localhost:3000", // Your frontend URL
+    credentials: true, // Allow credentials (cookies, etc.)
+  })
+);
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());

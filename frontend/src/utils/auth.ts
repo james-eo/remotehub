@@ -1,26 +1,27 @@
 import { useEffect } from "react";
 import { useRouter } from "next/router";
 import { getCurrentUser } from "../services/api";
+import { useState } from "react";
 
 export function useAuth(redirectTo = "/login") {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     async function checkAuth() {
       try {
         await getCurrentUser();
+        setIsAuthenticated(true);
       } catch (err: unknown) {
-        // Log the error for debugging purposes
-        console.warn(
-          "Authentication check failed:",
-          err instanceof Error ? err.message : "Unknown error"
-        );
-        // Redirect to login page
+        setIsAuthenticated(false);
+        // Redirect to login page if authentication fails
         router.push(redirectTo);
       }
     }
     checkAuth();
   }, [redirectTo, router]);
+
+  return { isAuthenticated };
 }
 
 interface AuthError extends Error {
@@ -49,7 +50,6 @@ export const logout = async (): Promise<void> => {
   }
 };
 
-// Optional: Add a type-safe way to check if user is authenticated
 export const isAuthenticated = (): boolean => {
   try {
     const token = localStorage.getItem("token");
