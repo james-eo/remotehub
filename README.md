@@ -36,6 +36,14 @@ RemoteHub is a sophisticated remote job board platform designed to compete with 
 - Email notifications for job applications and new job postings
 - Mobile-responsive design
 
+## Images
+
+![Home page](https://github.com/james-eo/remotehub/blob/main/images/remotehub.png)
+![Home page2](https://github.com/james-eo/remotehub/blob/main/images/remotehub1.png)
+![Jobs page](https://github.com/james-eo/remotehub/blob/main/images/remotehub1.png)
+![About page](https://github.com/james-eo/remotehub/blob/main/images/remotehub3.png)
+
+
 ## Tech Stack
 
 - **Frontend**: React.js, Next.js, Tailwind CSS
