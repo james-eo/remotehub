@@ -5,7 +5,6 @@ import jwt from "jsonwebtoken";
 const { Schema } = mongoose;
 const { ObjectId } = Schema;
 
-// Job History Schema
 const jobHistorySchema = new Schema(
   {
     title: {
@@ -41,7 +40,6 @@ const jobHistorySchema = new Schema(
   { timestamps: true }
 );
 
-// User Schema
 const userSchema = new mongoose.Schema(
   {
     firstName: {
@@ -72,7 +70,6 @@ const userSchema = new mongoose.Schema(
       minlength: [6, "password must be at least 6 characters"],
     },
     jobHistory: [jobHistorySchema],
-
     role: { type: Number, default: 0 },
     avatar: {
       type: String,
@@ -90,12 +87,10 @@ const userSchema = new mongoose.Schema(
       personalUrl: { type: String, default: "" },
       resumeUrl: { type: String, default: "" },
     },
-    // resetPasswordToken: { type: String },
   },
   { timestamps: true }
 );
 
-// Password hashing
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) {
     next();
@@ -104,12 +99,9 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
-// Password verification
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
-
-// JWT token
 
 userSchema.methods.getSignedJwtToken = function () {
   return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
